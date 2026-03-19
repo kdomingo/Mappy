@@ -1,35 +1,75 @@
 package com.tourist.mappy.map
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import android.annotation.SuppressLint
+import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.navigation.toRoute
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FetchPlaceRequest
+import com.google.android.libraries.places.api.net.PlacesClient
+import com.tourist.mappy.data.MapData
+import com.tourist.mappy.service.LocationService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
-class MapViewModel @Inject constructor() : ViewModel() {
-    var isSearchDialogOpen by mutableStateOf(false)
-        private set
+class MapViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val placesClient: PlacesClient,
+    private val locationService: LocationService
+) : ViewModel() {
 
-    var searchQuery by mutableStateOf("")
-        private set
+    private val _state = MutableStateFlow(MapUiState())
+    val state = _state.asStateFlow()
 
-    fun onSearchTapped() {
-        isSearchDialogOpen = true
+    private val placeId = savedStateHandle.toRoute<MapData>().arg
+
+    private val locationCallback = object: LocationCallback() {
+        override fun onLocationResult(p0: LocationResult) {
+            super.onLocationResult(p0)
+            p0.lastLocation?.let {
+                markCurrentLocation(LatLng(it.latitude, it.longitude))
+            }
+        }
     }
 
-    fun onDismissSearch() {
-        isSearchDialogOpen = false
+    init {
+        locationService.listen(locationCallback)
     }
 
-    fun onSearchQueryChange(newQuery: String) {
-        searchQuery = newQuery
+    @SuppressLint("MissingPermission")
+    fun fetchCurrentLocation() {
+        placeId?.let { id ->
+            locationService.remove(locationCallback)
+            val request = FetchPlaceRequest.newInstance(id, listOf(
+                Place.Field.DISPLAY_NAME,
+                Place.Field.FORMATTED_ADDRESS,
+                Place.Field.LOCATION
+            ))
+            placesClient
+                .fetchPlace(request)
+                .addOnSuccessListener { response ->
+                    response.place.location?.let { coords -> markCurrentLocation(coords) }
+                }
+                .addOnFailureListener {
+                    Log.d(javaClass.simpleName, "fetchCurrentLocation: ${it.message}")
+                }
+
+        } ?: locationService.fetchCurrentLocation()
     }
 
-    fun onSearchConfirm() {
-        // Logic to handle search confirmation (e.g., geocoding)
-        isSearchDialogOpen = false
+    private fun markCurrentLocation(location: LatLng) {
+        _state.update {
+            it.copy(
+                currentLocation = location,
+            )
+        }
     }
 }

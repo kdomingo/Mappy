@@ -1,130 +1,117 @@
 package com.tourist.mappy.map
 
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import android.util.Log
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import com.google.android.gms.location.LocationServices
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.*
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberUpdatedMarkerState
+import com.tourist.mappy.main.LocationViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapScreen(viewModel: MapViewModel) {
-    val context = LocalContext.current
-    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-    
-    var locationPermissionGranted by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        )
+fun MapScreen(
+    navController: NavController
+) {
+    val viewModel = hiltViewModel<MapViewModel>()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    SideEffect {
+        viewModel.fetchCurrentLocation()
     }
 
-    var currentLocation by remember { mutableStateOf<LatLng?>(null) }
-
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            locationPermissionGranted = isGranted
-        }
-    )
-
-    LaunchedEffect(locationPermissionGranted) {
-        if (locationPermissionGranted) {
-            try {
-                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    location?.let {
-                        currentLocation = LatLng(it.latitude, it.longitude)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text("Mappy")
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            navController.popBackStack()
+                        }
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "")
                     }
                 }
-            } catch (e: SecurityException) {
-                // Handle exception
-            }
-        } else {
-            launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            )
         }
-    }
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize()
+        ) {
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (currentLocation != null) {
-            val cameraPositionState = rememberCameraPositionState {
-                position = CameraPosition.fromLatLngZoom(currentLocation!!, 15f)
-            }
-            
-            val markerState = rememberMarkerState(position = currentLocation!!)
+            state.currentLocation?.let { coords ->
+                val cameraPositionState = rememberCameraPositionState {
+                    position = CameraPosition.fromLatLngZoom(coords, 15f)
+                }
 
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                properties = MapProperties(isMyLocationEnabled = true),
-                uiSettings = MapUiSettings(myLocationButtonEnabled = true)
+                val markerState = rememberUpdatedMarkerState(position = coords)
+
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    properties = MapProperties(isMyLocationEnabled = true),
+                    uiSettings = MapUiSettings(
+                        compassEnabled = false,
+                        indoorLevelPickerEnabled = false,
+                        mapToolbarEnabled = false,
+                        myLocationButtonEnabled = false,
+                        rotationGesturesEnabled = false,
+                        scrollGesturesEnabled = false,
+                        scrollGesturesEnabledDuringRotateOrZoom = false,
+                        tiltGesturesEnabled = false,
+                        zoomControlsEnabled = false,
+                        zoomGesturesEnabled = false,
+                    )
+                ) {
+                    Marker(
+                        state = markerState,
+                        title = "You are here",
+                        snippet = "Current Location"
+                    )
+                }
+            } ?: Box(
+                modifier = Modifier.fillMaxSize()
             ) {
-                Marker(
-                    state = markerState,
-                    title = "You are here",
-                    snippet = "Current Location"
+                CircularProgressIndicator(
+                    modifier = Modifier.align(alignment = Alignment.Center)
                 )
             }
-        } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                if (!locationPermissionGranted) {
-                    Text("Location permission is required to show the map.")
-                } else {
-                    CircularProgressIndicator()
-                }
-            }
-        }
-
-        if (viewModel.isSearchDialogOpen) {
-            SearchDialog(
-                query = viewModel.searchQuery,
-                onQueryChange = { viewModel.onSearchQueryChange(it) },
-                onDismiss = { viewModel.onDismissSearch() },
-                onConfirm = { viewModel.onSearchConfirm() }
-            )
         }
     }
-}
-
-@Composable
-fun SearchDialog(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Search Location") },
-        text = {
-            OutlinedTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                placeholder = { Text("Enter location...") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("Search")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
 }

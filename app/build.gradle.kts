@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -17,6 +18,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        resValue("string", "maps_key", "AIzaSyDg1qUnlR4qUNeVAYzRnHuWSPuCbBuzKZc")
+        resValue("string", "places_key", "AIzaSyCYThNySw3E9lJz1sEbroiGSeqW1Ae03yo")
     }
 
     buildTypes {
@@ -26,6 +30,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            resValue("string", "maps_key", "AIzaSyDg1qUnlR4qUNeVAYzRnHuWSPuCbBuzKZc")
+            resValue("string", "places_key", "AIzaSyCYThNySw3E9lJz1sEbroiGSeqW1Ae03yo")
+        }
+        debug {
+            resValue("string", "maps_key", "AIzaSyDg1qUnlR4qUNeVAYzRnHuWSPuCbBuzKZc")
+            resValue("string", "places_key", "AIzaSyCYThNySw3E9lJz1sEbroiGSeqW1Ae03yo")
         }
     }
     compileOptions {
@@ -34,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        resValues = true
     }
 }
 
@@ -53,8 +65,12 @@ dependencies {
 
     // Hilt
     implementation(libs.hilt.android)
+    implementation(libs.places)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // Serialization
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
