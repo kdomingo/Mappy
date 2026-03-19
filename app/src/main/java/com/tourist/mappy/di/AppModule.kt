@@ -25,8 +25,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideApiKeyProvider(): ApiKeyProvider {
-        return AppApiKeyProvider()
+    fun provideApiKeyProvider(context: Context): ApiKeyProvider {
+        return AppApiKeyProvider(context = context)
     }
 
     @Provides

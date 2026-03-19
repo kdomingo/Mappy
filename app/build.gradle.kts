@@ -18,6 +18,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        resValue("string", "maps_key", "AIzaSyDg1qUnlR4qUNeVAYzRnHuWSPuCbBuzKZc")
+        resValue("string", "places_key", "AIzaSyCYThNySw3E9lJz1sEbroiGSeqW1Ae03yo")
     }
 
     buildTypes {
@@ -27,6 +30,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            resValue("string", "maps_key", "AIzaSyDg1qUnlR4qUNeVAYzRnHuWSPuCbBuzKZc")
+            resValue("string", "places_key", "AIzaSyCYThNySw3E9lJz1sEbroiGSeqW1Ae03yo")
+        }
+        debug {
+            resValue("string", "maps_key", "AIzaSyDg1qUnlR4qUNeVAYzRnHuWSPuCbBuzKZc")
+            resValue("string", "places_key", "AIzaSyCYThNySw3E9lJz1sEbroiGSeqW1Ae03yo")
         }
     }
     compileOptions {
@@ -35,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        resValues = true
     }
 }
 
