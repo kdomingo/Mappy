@@ -1,6 +1,11 @@
 package com.tourist.mappy.di
 
-class AppApiKeyProvider : ApiKeyProvider {
-    override fun mapsApiKey(): String = "AIzaSyDg1qUnlR4qUNeVAYzRnHuWSPuCbBuzKZc"
-    override fun placesApiKey(): String = "AIzaSyCYThNySw3E9lJz1sEbroiGSeqW1Ae03yo"
+import android.content.Context
+import com.tourist.mappy.R
+
+class AppApiKeyProvider(
+    private val context: Context
+) : ApiKeyProvider {
+    override fun mapsApiKey(): String = context.getString(R.string.maps_key)
+    override fun placesApiKey(): String = context.getString(R.string.places_key)
 }
