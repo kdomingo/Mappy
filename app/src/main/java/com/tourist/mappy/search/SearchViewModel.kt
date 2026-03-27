@@ -87,7 +87,7 @@ class SearchViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         searchResults = emptyList(),
-                        error = exception.message ?: "Unknown error"
+                        error = exception.message
                     )
                 }
             }

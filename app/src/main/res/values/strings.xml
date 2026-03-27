@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Mappy</string>
+    <string name="you_are_here">You are here</string>
+    <string name="search_placeholder">Find a place</string>
+    <string name="icon_description_map">Map Icon</string>
+    <string name="icon_description_search">Search Icon</string>
 </resources>
