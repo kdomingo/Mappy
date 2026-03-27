@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Map
@@ -33,12 +34,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.google.android.libraries.places.api.model.AutocompletePrediction
+import com.tourist.mappy.R
 import com.tourist.mappy.data.MapData
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,7 +77,7 @@ fun SearchScreen(
                             navController.navigate(MapData())
                         }
                     ) {
-                        Icon(Icons.Filled.Map, "Map Icon")
+                        Icon(Icons.Filled.Map, stringResource(R.string.icon_description_map))
                     }
                 }
             )
@@ -87,6 +90,7 @@ fun SearchScreen(
         ) {
             OutlinedTextField(
                 state = queryController,
+                lineLimits = TextFieldLineLimits.SingleLine,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -106,8 +110,12 @@ fun SearchScreen(
                             viewModel.onSearchQueryChanged(queryController.text.toString())
                         }
                     ) {
-                        Icon(Icons.Filled.Search, "Search Icon")
+                        Icon(Icons.Filled.Search, stringResource(R.string.icon_description_search))
                     }
+                },
+                onKeyboardAction = {
+                    keyboardController?.hide()
+                    viewModel.onSearchQueryChanged(queryController.text.toString())
                 }
             )
             Box(
@@ -128,7 +136,7 @@ fun SearchScreen(
                 } else {
                     if (uiState.searchResults.isEmpty()) {
                         Text(
-                            "Search a place",
+                            stringResource(R.string.search_placeholder),
                             fontWeight = FontWeight.W600,
                             fontSize = 18.sp,
                             modifier = Modifier.align(alignment = Alignment.Center)
@@ -139,7 +147,6 @@ fun SearchScreen(
                             SearchResultItem(
                                 prediction = prediction,
                                 onClick = {
-                                    // navController.navigate("${Screens.Map}?placeId=${prediction.placeId}")
                                     navController.navigate(MapData(arg = prediction.placeId))
                                 }
                             )

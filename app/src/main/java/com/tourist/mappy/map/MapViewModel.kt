@@ -56,10 +56,19 @@ class MapViewModel @Inject constructor(
             placesClient
                 .fetchPlace(request)
                 .addOnSuccessListener { response ->
-                    response.place.location?.let { coords -> markCurrentLocation(coords) }
+                    val place = response.place
+                    place.location?.let { coords ->
+                        _state.update {
+                            it.copy(
+                                place = place,
+                                currentLocation = LatLng(coords.latitude, coords.longitude)
+                            )
+                        }
+                    }
                 }
                 .addOnFailureListener {
                     Log.d(javaClass.simpleName, "fetchCurrentLocation: ${it.message}")
+                    locationService.fetchCurrentLocation()
                 }
 
         } ?: locationService.fetchCurrentLocation()
