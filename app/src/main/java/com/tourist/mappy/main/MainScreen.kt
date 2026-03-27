@@ -53,7 +53,6 @@ fun MainScreen() {
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            Log.d(javaClass.simpleName, "MainScreen: Event: $event")
             when (event) {
                 ON_START -> {
                     viewModel.startLocationUpdates(context)
@@ -87,16 +86,4 @@ fun MainScreen() {
     }
 
     NavHost(navController = navController, navGraph)
-
-
-//    NavHost(navController = navController, navGraph) {
-//        composable(
-//            Screens.Map.name
-//        ) {
-//            MapScreen(navController = navController)
-//        }
-//        composable(Screens.Search.name) {
-//            SearchScreen(navController = navController)
-//        }
-//    }
 }
